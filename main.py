@@ -31,7 +31,8 @@ col_exclude = ['x', 'y', 'z', 'index', 'host_id']
 col_allow = [i for i in df.columns if i not in col_exclude]
 
 sql_query = TextInput(value="where vmax > 100", title='SQL filter:')
-log_axes = CheckboxGroup(labels=["Log(x)", "Log(y)"], active=[])
+sql_query2 = TextInput(value="where vmax > 100", title='SQL filter:')
+log_axes = CheckboxGroup(labels=["Log(x)", "Log(y)"], active=[], inline=True)
 column1 = Select(title="X-axis Data:", value="vmax", options=col_allow)
 column2 = Select(title="Y-axis Data:", value="mvir", options=col_allow)
 plot_type = Select(title="Standard plots:", value="Infall", options=["Infall", "Mvir","Vmax", "Vpeak"]) # Add AM maybe?
@@ -68,8 +69,11 @@ def query_change(attr, old, new):
 		This function takes the SQL query and alters it slightly to make
 		the query apply to both the DMO and Disk tables
 	'''
-	s = 'select * from dmo ' + sql_query.value
-	s2 = 'select * from disk ' + sql_query.value
+	s = 'select * from dmo ' + new
+	s2 = 'select * from disk ' + new
+
+	sql_query.value = new
+	sql_query2.value = new
 
 	global df, df2
 	df = pd.read_sql(s,conn)
@@ -204,23 +208,23 @@ p2.line('x', 'y', source=plot_data2, color='magenta', legend='Disk')
 p2.legend.click_policy = 'hide'
     
 sql_query.on_change('value', query_change)
+sql_query2.on_change('value', query_change)
 log_axes.on_change('active', scale_axes)
 column1.on_change('value', column_change)
 column2.on_change('value', column_change)
 plot_type.on_change('value', create_line_plot)
 
-layout1 = row(column(sql_query, log_axes, column1, column2, plot_type), p, p2)
-# layout2 = row(column(sql_query, log_axes, plot_type), p2)
+tab1 = Panel(child=row(column(sql_query, log_axes, column1, column2),p), title='Explore')
+tab2 = Panel(child=row(column(sql_query2, plot_type),p2), title='Relations')
+tabs = Tabs(tabs=[tab1,tab2])
+
+layout = row(sql_query, tabs)
 
 create_line_plot([],[],'Infall')
 
-curdoc().add_root(layout1)
+curdoc().add_root(tabs)
 
 # plots = column()
 # data_table = DataTable(source=source,
 #                        columns=[Table])
-# tab1 = Panel(child=plots, title='Figures')
-# tab2 = Panel(child=data_table, title='Table')
-# tabs = Tabs(tabs=[tab1,tab2])
-
 
