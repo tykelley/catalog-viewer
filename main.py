@@ -7,7 +7,7 @@ import numpy as np
 
 from bokeh.io import curdoc
 from bokeh.palettes import Category20
-from bokeh.layouts import row, column, widgetbox
+from bokeh.layouts import row, column, widgetbox, layout
 from bokeh.models import ColumnDataSource, HoverTool, CategoricalColorMapper, CustomJS
 from bokeh.models.widgets import TextInput, Select, RangeSlider, Slider, CheckboxGroup, Panel, Tabs, Button #, DataTable, TableColumn
 from bokeh.plotting import figure
@@ -21,8 +21,10 @@ dmo = metadata.tables['dmo']
 disk = metadata.tables['disk']
 conn = engine.connect()
 
-df = pd.read_sql(sqlalchemy.select([dmo]).where(and_(dmo.c.vmax > 10, dmo.c.dist < 100)),conn)
-df2 = pd.read_sql(sqlalchemy.select([disk]).where(and_(disk.c.vmax > 10, disk.c.dist < 100)),conn)
+df = pd.read_sql(sqlalchemy.select([dmo]).where(and_(dmo.c.vmax > 100, dmo.c.dist < 100)),conn)
+df2 = pd.read_sql(sqlalchemy.select([disk]).where(and_(disk.c.vmax > 100, disk.c.dist < 100)),conn)
+download_dmo_sub = ColumnDataSource(data=df)
+download_dmo_all = ColumnDataSource(data=pd.read_sql(sqlalchemy.select([dmo]),conn))
 download_disk_sub = ColumnDataSource(data=df2)
 download_disk_all = ColumnDataSource(data=pd.read_sql(sqlalchemy.select([disk]),conn))
 source = ColumnDataSource(data={'x' : df['vmax'], 'y' : df['mvir'], 'host_id' : df['host_id'].astype(str)})
@@ -54,10 +56,14 @@ id_list = df['host_id'].unique().astype(str).tolist()
 
 color_mapper = CategoricalColorMapper(factors=id_list, palette=Category20[12])
 
-button_dmo_sub = Button(label="Download DMO Query", button_type="success")
-button_dmo_all = Button(label="Download DMO Catalog", button_type="success")
-button_disk_sub = Button(label="Download Disk Query", button_type="success")
-button_disk_all = Button(label="Download Disk Catalog", button_type="success")
+button_dmo_sub = Button(label="Download DMO Query", button_type="primary")
+button_dmo_all = Button(label="Download DMO Catalog", button_type="primary")
+button_disk_sub = Button(label="Download Disk Query", button_type="danger")
+button_disk_all = Button(label="Download Disk Catalog", button_type="danger")
+button_dmo_sub.callback = CustomJS(args=dict(source=download_dmo_sub), 
+                               code=open(join(dirname(__file__), "download.js")).read())
+button_dmo_all.callback = CustomJS(args=dict(source=download_dmo_all), 
+                               code=open(join(dirname(__file__), "download.js")).read())
 button_disk_sub.callback = CustomJS(args=dict(source=download_disk_sub), 
                                code=open(join(dirname(__file__), "download.js")).read())
 button_disk_all.callback = CustomJS(args=dict(source=download_disk_all), 
@@ -225,12 +231,12 @@ def create_line_plot(attr, old, new):
         p2.xaxis.axis_label = "Log10  " + labels_dict['vpeak']
         p2.yaxis.axis_label = ""
     elif new == "Pericenter":
-        t = (df['peri'].loc[df.dist > 0])*1000.
+        t = (df['peri'].loc[df.dist > 0])
         hist, edges = np.histogram(t, bins=100)
         hist = np.cumsum(hist)/hist.sum()
         plot_data.data = {'x' : edges[:-1],
                           'y' : hist}
-        t = (df2['peri'].loc[df2.dist > 0])*1000.
+        t = (df2['peri'].loc[df2.dist > 0])
         hist, edges = np.histogram(t, bins=100)
         hist = np.cumsum(hist)/hist.sum()
         plot_data2.data = {'x' : edges[:-1],
@@ -250,7 +256,7 @@ column1.on_change('value', column_change)
 column2.on_change('value', column_change)
 plot_type.on_change('value', create_line_plot)
 
-download_buttons = row(column(button_dmo_sub, button_disk_sub), column(button_dmo_all, button_disk_all))
+download_buttons = widgetbox([button_dmo_sub, button_dmo_all, button_disk_sub, button_disk_all], sizing_mode='scale_both')
 tab1 = Panel(child=row(column(sql_query, log_axes, column1, column2, download_buttons),p), title='Explore')
 tab2 = Panel(child=row(column(sql_query2, plot_type),p2), title='Relations')
 tabs = Tabs(tabs=[tab1,tab2])
