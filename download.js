@@ -20,7 +20,7 @@ for (var i = 0; i < data['index'].length; i++) {
     filetext = filetext.concat(joined);
 }
 
-var filename = 'data_result.csv';
+var filename = fname;
 var blob = new Blob([filetext], { type: 'text/csv;charset=utf-8;' });
 
 //addresses IE
