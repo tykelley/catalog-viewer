@@ -307,17 +307,23 @@ button_list = [button_dmo_sub, button_dmo_all, button_disk_sub, button_disk_all]
 download_buttons = widgetbox(button_list, sizing_mode="scale_both")
 
 # Setup the page layout
-desc = Div(text=open(join(dirname(__file__), "description.html")).read(),
-           sizing_mode="scale_width")
-main_col = column(sql_query, log_axes, x_col, y_col, download_buttons,
+tab1_desc = Div(text=open(join(dirname(__file__), "tab_1.html")).read(),
+                sizing_mode="scale_width")
+tab1_col = column(sql_query, log_axes, x_col, y_col, download_buttons,
                   width=250, height=500)
-main_col.sizing_mode = "fixed"
-tab1 = Panel(child=row(main_col, p, desc, sizing_mode="scale_both"), title='Explore')
-tab2 = Panel(child=row(column(sql_query2, plot_type), p2), title='Relations')
+tab1_col.sizing_mode = "fixed"
+
+tab2_col = column(sql_query2, plot_type, width=250, height=500)
+tab2_col.sizing_mode = "fixed"
+tab2_desc = Div(text=open(join(dirname(__file__), "tab_2.html")).read(),
+                sizing_mode="scale_width")
+
+tab1 = Panel(child=row(tab1_col, p, tab1_desc, sizing_mode="scale_both"), title='Explore')
+tab2 = Panel(child=row(tab2_col, p2, tab2_desc, sizing_mode="scale_both"), title='Relations')
 tabs = Tabs(tabs=[tab1, tab2])
 
 curdoc().add_root(tabs)
-curdoc().title = 'Catalog Explorer'
+curdoc().title = 'Catalog Viewer'
 
 update_plot_data()
 create_line_plot([], [], "Infall")

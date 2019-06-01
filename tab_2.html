@@ -1,0 +1,61 @@
+<style>
+    div {
+        margin: 20px;
+    }
+    p {
+        font-family: Helvetica, Arial, sans-serif
+    }
+    #data-cols {
+        font-family: Helvetica, Arial, sans-serif;
+        border-collapse: collapse;
+        margin: 20px;
+    }
+    
+    #data-cols td, #data-cols th {
+        border: 1px solid #ddd;
+        padding: 5px;
+    }
+    
+    #data-cols tr:nth-child(even){background-color: #f2f2f2;}
+    
+    #data-cols tr:hover {background-color: #ddd;}
+    
+    #data-cols th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #4CAF50;
+        color: white;
+    }
+</style>
+<div>
+    <p>This tab allows you to make some of the "standard" plots seen in many simulation papers.</p>
+    <p>Using the dropdown menu, you can select from:
+        <table id="data-cols">
+            <tr>
+                <th>Type</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>Infall</td>
+                <td>CCDF of infall times</td>
+            </tr>
+            <tr>
+                <td>Mvir</td>
+                <td>Subhalo virial mass function</td>
+            </tr>
+            <tr>
+                <td>Vmax</td>
+                <td>Subhalo maximum circular velocity (Vmax) function</td>
+            </tr>
+            <tr>
+                <td>Vpeak</td>
+                <td>Subhalo peak maximum circular velocity (Vpeak) function</td>
+            </tr>
+            <tr>
+                <td>Pericenter</td>
+                <td>CDF of subhalo pericenters</td>
+            </tr>
+        </table>
+    </p>
+</div>
