@@ -4,8 +4,8 @@ import numpy as np
 
 from bokeh.io import curdoc
 from bokeh.layouts import row, column, widgetbox
-from bokeh.models import ColumnDataSource, HoverTool, CustomJS
-from bokeh.models.widgets import TextInput, Select, CheckboxGroup, Panel, Tabs, Button  # DataTable, TableColumn
+from bokeh.models import ColumnDataSource, HoverTool, CustomJS, Div
+from bokeh.models.widgets import TextAreaInput, Select, CheckboxGroup, Panel, Tabs, Button
 from bokeh.plotting import figure
 from os.path import join, dirname
 from sqlalchemy import and_
@@ -20,10 +20,18 @@ disk = metadata.tables['disk']
 conn = engine.connect()
 
 df = pd.read_sql(sqlalchemy.select([dmo])
-                           .where(and_(dmo.c.vmax > 100, dmo.c.dist < 100)),
+                           .where(and_(
+                               dmo.c.vmax > 10,
+                               dmo.c.dist < 100,
+                               dmo.c.dist > 1
+                            )),
                  conn)
 df2 = pd.read_sql(sqlalchemy.select([disk])
-                            .where(and_(disk.c.vmax > 100, disk.c.dist < 100)),
+                            .where(and_(
+                               disk.c.vmax > 10,
+                               disk.c.dist < 100,
+                               disk.c.dist > 1
+                            )),
                   conn)
 dmo_data = ColumnDataSource(pd.read_sql(sqlalchemy.select([dmo]), conn))
 disk_data = ColumnDataSource(pd.read_sql(sqlalchemy.select([disk]), conn))
@@ -36,23 +44,24 @@ disk_line = ColumnDataSource(data={'x': [], 'y': []})
 
 # Build Bokeh inputs and callbacks
 
-col_exclude = ['x', 'y', 'z', 'index', 'host_id']
+col_exclude = ['x', 'y', 'z', 'index', 'host_id', 'id']
 col_allow = [i for i in df.columns if i not in col_exclude]
-default_query = "where vmax > 100 and dist < 100"
+default_query = "WHERE vmax > 10 AND dist BETWEEN 1 AND 100"
 
-sql_query = TextInput(value=default_query, title='SQL filter:')
-sql_query2 = TextInput(value=default_query, title='SQL filter:')
+sql_query = TextAreaInput(value=default_query, title='SQL filter:', rows=2)
+sql_query2 = TextAreaInput(value=default_query, title='SQL filter:', rows=2)
 x_col = Select(title="X-axis Data:", value="vmax", options=col_allow)
-y_col = Select(title="Y-axis Data:", value="mvir", options=col_allow)
+y_col = Select(title="Y-axis Data:", value="mass", options=col_allow)
 log_axes = CheckboxGroup(labels=["Log(x)", "Log(y)"], active=[], inline=True)
 plot_type = Select(title="Standard plots:", value="Infall",
                    options=["Infall", "Mvir", "Vmax", "Vpeak", "Pericenter"])
 
-labels_dict = dict(vmax='Vmax (km/s)', mvir='Mvir (M_sun)',
+labels_dict = dict(vmax='Vmax (km/s)', mass='Mvir (M_sun)',
                    rvir='Rvir (kpc)', dist='Dist from MW (kpc)',
-                   peri='Pericenter (kpc)', vpeak='Vpeak (km/s)',
-                   vr='Radial Velocity (km/s)', infall='Infall Time (Gyrs)',
-                   vtan='Tangential Velocity (km/s)',)
+                   peri='Pericenter (kpc)', rs='NFW scale radius (kpc)',
+                   vx='X Velocity (km/s)', infall='Infall Time (Gyr)',
+                   vz='Z Velocity (km/s)', vy='Y Velocity (km/s)',
+                   vpeak='Vpeak (km/s)', scale_vpeak='Time of Vpeak (a)')
 hover = HoverTool(tooltips=[('Host', '@host_id'),
                             ('{}'.format(x_col.value), '@x'),
                             ('{}'.format(y_col.value), '@y')])
@@ -205,29 +214,31 @@ def create_line_plot(attr, old, new):
 
     if new == "Infall":
         t = dmo_source.data['infall'][dmo_source.data['infall'] < 13.8]
-        hist, edges = np.histogram(t, bins=100, range=(0, 13))
+        t = t[t > 0]
+        hist, edges = np.histogram(t, bins=100, range=(0, 12))
         hist = (np.sum(hist) - np.cumsum(hist))/np.sum(hist)
         dmo_line.data = {'x': edges[:-1],
                          'y': hist}
         t = disk_source.data['infall'][disk_source.data['infall'] < 13.8]
-        hist, edges = np.histogram(t, bins=100, range=(0, 13))
+        t = t[t > 0]
+        hist, edges = np.histogram(t, bins=100, range=(0, 12))
         hist = (np.sum(hist) - np.cumsum(hist))/np.sum(hist)
         disk_line.data = {'x': edges[:-1],
                           'y': hist}
         p2.xaxis.axis_label = labels_dict['infall']
         p2.yaxis.axis_label = ""
     elif new == "Mvir":
-        t = np.log10(dmo_source.data['mvir'][dmo_source.data['dist'] > 0])
+        t = np.log10(dmo_source.data['mass'][dmo_source.data['dist'] > 0])
         hist, edges = np.histogram(t, bins=100)
         hist = np.log10(np.sum(hist) - np.cumsum(hist))
         dmo_line.data = {'x': edges[:-1],
                          'y': hist}
-        t = np.log10(disk_source.data['mvir'][disk_source.data['dist'] > 0])
+        t = np.log10(disk_source.data['mass'][disk_source.data['dist'] > 0])
         hist, edges = np.histogram(t, bins=100)
         hist = np.log10(np.sum(hist) - np.cumsum(hist))
         disk_line.data = {'x': edges[:-1],
                           'y': hist}
-        p2.xaxis.axis_label = "Log10  " + labels_dict['mvir']
+        p2.xaxis.axis_label = "Log10  " + labels_dict['mass']
         p2.yaxis.axis_label = ""
     elif new == "Vmax":
         t = np.log10(dmo_source.data['vmax'][dmo_source.data['dist'] > 0])
@@ -272,6 +283,11 @@ def create_line_plot(attr, old, new):
     _ = np.seterr(**old_set)
 
 
+def _customJS(fname, source, script="download.js"):
+    return CustomJS(args=dict(source=source, fname=fname),
+                    code=open(join(dirname(__file__), script)).read())
+
+
 sql_query.on_change('value', query_change)
 sql_query2.on_change('value', query_change)
 log_axes.on_change('active', scale_axes)
@@ -283,25 +299,25 @@ button_dmo_sub = Button(label="Download DMO Query", button_type="primary")
 button_dmo_all = Button(label="Download DMO Catalog", button_type="primary")
 button_disk_sub = Button(label="Download Disk Query", button_type="danger")
 button_disk_all = Button(label="Download Disk Catalog", button_type="danger")
-button_dmo_all.callback = CustomJS(args=dict(source=dmo_data, fname='pelvis_dmo_all.csv'),
-                                   code=open(join(dirname(__file__), "download.js")).read())
-button_dmo_sub.callback = CustomJS(args=dict(source=dmo_source, fname='pelvis_dmo_query.csv'),
-                                   code=open(join(dirname(__file__), "download.js")).read())
-button_disk_all.callback = CustomJS(args=dict(source=disk_data, fname='pelvis_disk_all.csv'),
-                                    code=open(join(dirname(__file__), "download.js")).read())
-button_disk_sub.callback = CustomJS(args=dict(source=disk_source, fname='pelvis_disk_query.csv'),
-                                    code=open(join(dirname(__file__), "download.js")).read())
+button_dmo_all.callback = _customJS('pelvis_dmo_all.csv', dmo_data)
+button_dmo_sub.callback = _customJS('pelvis_dmo_query.csv', dmo_source)
+button_disk_all.callback = _customJS('pelvis_disk_all.csv', disk_data)
+button_disk_sub.callback = _customJS('pelvis_disk_query.csv', disk_source)
 button_list = [button_dmo_sub, button_dmo_all, button_disk_sub, button_disk_all]
-download_buttons = widgetbox(button_list, sizing_mode='scale_both')
+download_buttons = widgetbox(button_list, sizing_mode="scale_both")
 
 # Setup the page layout
-
-tab1 = Panel(child=row(column(sql_query, log_axes, x_col, y_col, download_buttons), p), title='Explore')
+desc = Div(text=open(join(dirname(__file__), "description.html")).read(),
+           sizing_mode="scale_width")
+main_col = column(sql_query, log_axes, x_col, y_col, download_buttons,
+                  width=250, height=500)
+main_col.sizing_mode = "fixed"
+tab1 = Panel(child=row(main_col, p, desc, sizing_mode="scale_both"), title='Explore')
 tab2 = Panel(child=row(column(sql_query2, plot_type), p2), title='Relations')
 tabs = Tabs(tabs=[tab1, tab2])
 
 curdoc().add_root(tabs)
-curdoc().title = 'Sim App Test'
+curdoc().title = 'Catalog Explorer'
 
 update_plot_data()
 create_line_plot([], [], "Infall")

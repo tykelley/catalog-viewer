@@ -1,0 +1,111 @@
+<style>
+    div {
+        margin: 20px;
+    }
+    p {
+        font-family: Helvetica, Arial, sans-serif
+    }
+    #data-cols {
+        font-family: Helvetica, Arial, sans-serif;
+        border-collapse: collapse;
+        margin: 20px;
+    }
+    
+    #data-cols td, #data-cols th {
+        border: 1px solid #ddd;
+        padding: 5px;
+    }
+    
+    #data-cols tr:nth-child(even){background-color: #f2f2f2;}
+    
+    #data-cols tr:hover {background-color: #ddd;}
+    
+    #data-cols th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #4CAF50;
+        color: white;
+    }
+</style>
+<div>
+    <p> This app allows you to interact with the present day halo catalogs for the <a href="http://localgroup.ps.uci.edu/phat-elvis">Phat ELVIS</a> simulation suite.</p>
+    <p>Using the text box on the top left, you can enter an SQL query to select only the subhalos of interest to you.<br>The full list of queryable columns are:
+        <table id="data-cols">
+            <tr>
+                <th>Column</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>host_id</td>
+                <td>simulation number. Host mass decreases as this increases</td>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>mass rank within a simulation (host halo has id of 0)</td>
+            </tr>
+            <tr>
+                <td>mass</td>
+                <td>mass of the subhalo (Solar masses)</td>
+            </tr>
+            <tr>
+                <td>rs</td>
+                <td>scale radius of best fit NFW profile as determined by Rockstar (kpc)</td>
+            </tr>
+            <tr>
+                <td>rvir</td>
+                <td>virial radius (kpc)</td>
+            </tr>
+            <tr>
+                <td>vmax</td>
+                <td>maximum circular velocity (km/s)</td>
+            </tr>
+            <tr>
+                <td>vx</td>
+                <td>x bulk velocity (km/s)</td>
+            </tr>
+            <tr>
+                <td>vy</td>
+                <td>y bulk velocity (km/s)</td>
+            </tr>
+            <tr>
+                <td>vz</td>
+                <td>z bulk velocity (km/s)</td>
+            </tr>
+            <tr>
+                <td>x</td>
+                <td>x coordinate of center (Mpc)</td>
+            </tr>
+            <tr>
+                <td>y</td>
+                <td>y coordinate of center (Mpc)</td>
+            </tr>
+            <tr>
+                <td>z</td>
+                <td>z coordinate of center (Mpc)</td>
+            </tr>
+            <tr>
+                <td>vpeak</td>
+                <td>peak vmax ever obtained (km/s)</td>
+            </tr>
+            <tr>
+                <td>scale_vpeak</td>
+                <td>scale factor of vpeak</td>
+            </tr>
+            <tr>
+                <td>dist</td>
+                <td>distance from center (kpc)</td>
+            </tr>
+            <tr>
+                <td>infall</td>
+                <td>scale factor of first host Rvir crossing (-1 = never crossed)</td>
+            </tr>
+            <tr>
+                <td>peri</td>
+                <td>distance of closest approach to the host halo center (kpc)</td>
+            </tr>
+        </table>
+    </p>
+    <p>By using the dropdown boxes, you may select different columns for the X- and Y-axes</p>
+    <p>The colored buttons allow you to download either your subquery or the entire dataset.</p>
+</div>

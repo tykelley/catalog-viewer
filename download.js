@@ -1,18 +1,22 @@
 var data = source.data;
-var filetext =  'index,host_id,x,y,z,dist,rvir,mvir,vmax,vpeak,vtan,vr,infall,peri\n';
+var filetext =  'index,host_id,id,mass,rs,rvir,vmax,vx,vy,vz,x,y,z,vpeak,scale_vpeak,dist,infall,peri\n';
 for (var i = 0; i < data['index'].length; i++) {
     var currRow = [data['index'][i].toString(),
                    data['host_id'][i].toString(),
+                   data['id'][i].toString(),
+                   data['mass'][i].toString(),
+                   data['rs'][i].toString(),
+                   data['rvir'][i].toString(),
+                   data['vmax'][i].toString(),
+                   data['vx'][i].toString(),
+                   data['vy'][i].toString(),
+                   data['vz'][i].toString(),
                    data['x'][i].toString(),
                    data['y'][i].toString(),
                    data['z'][i].toString(),
-                   data['dist'][i].toString(),
-                   data['rvir'][i].toString(),
-                   data['mvir'][i].toString(),
-                   data['vmax'][i].toString(),
                    data['vpeak'][i].toString(),
-                   data['vtan'][i].toString(),
-                   data['vr'][i].toString(),
+                   data['scale_vpeak'][i].toString(),
+                   data['dist'][i].toString(),
                    data['infall'][i].toString(),
                    data['peri'][i].toString().concat('\n')];
 
